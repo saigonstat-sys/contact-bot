@@ -26,7 +26,7 @@ async def ensure_db():
     if not db_initialized:
         await bot_module.init_db()
         webhook_path = "/" + BOT_TOKEN.split(":")[1] + "/"
-        webhook_url = "https://Status101.pythonanywhere.com" + webhook_path
+        webhook_url = "https://contact-bot-hzjf.onrender.com" + webhook_path
         await bot.set_webhook(webhook_url)
         print("Webhook set: " + webhook_url)
         db_initialized = True

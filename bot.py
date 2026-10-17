@@ -486,43 +486,19 @@ async def cb_ed_bd(cb: CallbackQuery, state: FSMContext):
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("✅ Таблицы базы данных готовы")
+        print("✅ Таблицы базы данных готовы")
 
-from aiohttp import web
-
-def create_app():
-    app = web.Application()
-
+async def main():
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher(storage=MemoryStorage())
     dp.message.middleware(AccessCheck())
     dp.callback_query.middleware(AccessCheck())
     dp.include_router(router)
-
-    async def webhook_handler(request):
-        data = await request.json()
-        update = Update(**data)
-        await dp.feed_update(bot, update)
-        return web.Response()
-
-    app.router.add_post(f'/{BOT_TOKEN.split(":")[1]}/', webhook_handler)
-
-    async def on_startup(app):
-        await init_db()
-        webhook_url = f"https://Status101.pythonanywhere.com/{BOT_TOKEN.split(':')[1]}/"
-        await bot.set_webhook(webhook_url)
-        print(f"✅ Webhook установлен: {webhook_url}")
-        print("🤖 Бот запущен и работает!")
-
-    async def on_shutdown(app):
-        await bot.delete_webhook()
-        await bot.session.close()
-
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
-
-    return app
+    
+    await init_db()
+    print("🤖 Бот запущен в режиме long polling!")
+    
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    app = create_app()
-    web.run_app(app, host='0.0.0.0', port=8080)
+    asyncio.run(main())

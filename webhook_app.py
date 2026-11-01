@@ -1,4 +1,4 @@
-import asyncio
+import os
 from aiohttp import web
 from aiogram import Bot, Dispatcher, Update
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -44,7 +44,6 @@ def create_app():
     return app
 
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get('PORT', 8080))
+    port = int(os.environ.get('PORT', 10000))
     app = create_app()
     web.run_app(app, host='0.0.0.0', port=port)

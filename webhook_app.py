@@ -7,7 +7,7 @@ from bot import BOT_TOKEN, init_db, router, AccessCheck
 
 async def on_startup(app):
     await init_db()
-    webhook_url = f"https://contact-bot-hzjf.onrender.com/{BOT_TOKEN.split(':')[1]}/"
+    webhook_url = f"https://contact-bot-hzjf.onrender.com/{BOT_TOKEN}/"
     await app['bot'].set_webhook(webhook_url)
     print(f"✅ Webhook установлен: {webhook_url}")
     print("🤖 Бот запущен и работает!")
@@ -38,7 +38,7 @@ def create_app():
     app['dp'] = dp
     
     app.router.add_get('/', health_handler)
-    app.router.add_post(f'/{BOT_TOKEN.split(":")[1]}/', webhook_handler)
+    app.router.add_post(f'/{BOT_TOKEN}/', webhook_handler)
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
     

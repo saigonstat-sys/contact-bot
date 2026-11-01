@@ -1,5 +1,4 @@
 import os
-import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher, Update
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -44,15 +43,7 @@ def create_app():
     
     return app
 
-async def main():
-    app = create_app()
-    runner = web.AppRunner(app)
-    await runner.setup()
-    port = int(os.environ.get('PORT', 10000))
-    site = web.TCPSite(runner, '0.0.0.0', port)
-    await site.start()
-    print(f"🚀 Сервер запущен на порту {port}")
-    await asyncio.Event().wait()
-
 if __name__ == '__main__':
-    asyncio.run(main())
+    port = int(os.environ.get('PORT', 10000))
+    app = create_app()
+    web.run_app(app, host='0.0.0.0', port=port, print=None)

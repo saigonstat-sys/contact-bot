@@ -1,6 +1,7 @@
 import os
 from aiohttp import web
-from aiogram import Bot, Dispatcher, Update
+from aiogram import Bot, Dispatcher
+from aiogram.types import Update
 from aiogram.fsm.storage.memory import MemoryStorage
 from bot import BOT_TOKEN, init_db, router, AccessCheck
 
@@ -46,4 +47,4 @@ def create_app():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app = create_app()
-    web.run_app(app, host='0.0.0.0', port=port, print=None)
+    web.run_app(app, host='0.0.0.0', port=port)

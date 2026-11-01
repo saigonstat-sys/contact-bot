@@ -1,3 +1,4 @@
+import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher, Update
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -20,7 +21,10 @@ async def webhook_handler(request):
     await request.app['dp'].feed_update(request.app['bot'], update)
     return web.Response()
 
-def application():
+async def health_handler(request):
+    return web.Response(text="Bot is running")
+
+def create_app():
     app = web.Application()
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher(storage=MemoryStorage())
@@ -32,8 +36,15 @@ def application():
     app['bot'] = bot
     app['dp'] = dp
     
+    app.router.add_get('/', health_handler)
     app.router.add_post(f'/{BOT_TOKEN.split(":")[1]}/', webhook_handler)
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
     
     return app
+
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 8080))
+    app = create_app()
+    web.run_app(app, host='0.0.0.0', port=port)

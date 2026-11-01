@@ -1,53 +1,41 @@
-import sys
-import os
-import asyncio
-import json
+from aiohttp import web
+from aiogram import Bot, Dispatcher, Update
+from aiogram.fsm.storage.memory import MemoryStorage
+from bot import BOT_TOKEN, init_db, router, AccessCheck
 
-path = "/home/Status101"
-if path not in sys.path:
-    sys.path.insert(0, path)
+async def on_startup(app):
+    await init_db()
+    webhook_url = f"https://contact-bot-hzjf.onrender.com/{BOT_TOKEN.split(':')[1]}/"
+    await app['bot'].set_webhook(webhook_url)
+    print(f"✅ Webhook установлен: {webhook_url}")
+    print("🤖 Бот запущен и работает!")
 
-import bot as bot_module
+async def on_shutdown(app):
+    await app['bot'].delete_webhook()
+    await app['bot'].session.close()
 
-BOT_TOKEN = bot_module.BOT_TOKEN
-MY_TELEGRAM_ID = bot_module.MY_TELEGRAM_ID
+async def webhook_handler(request):
+    data = await request.json()
+    update = Update(**data)
+    await request.app['dp'].feed_update(request.app['bot'], update)
+    return web.Response()
 
-bot = bot_module.Bot(token=BOT_TOKEN)
-dp = bot_module.Dispatcher(storage=bot_module.MemoryStorage())
+def create_web_app():
+    app = web.Application()
+    bot = Bot(token=BOT_TOKEN)
+    dp = Dispatcher(storage=MemoryStorage())
+    
+    dp.message.middleware(AccessCheck())
+    dp.callback_query.middleware(AccessCheck())
+    dp.include_router(router)
+    
+    app['bot'] = bot
+    app['dp'] = dp
+    
+    app.router.add_post(f'/{BOT_TOKEN.split(":")[1]}/', webhook_handler)
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_shutdown)
+    
+    return app
 
-dp.message.middleware(bot_module.AccessCheck())
-dp.callback_query.middleware(bot_module.AccessCheck())
-dp.include_router(bot_module.router)
-
-db_initialized = False
-
-async def ensure_db():
-    global db_initialized
-    if not db_initialized:
-        await bot_module.init_db()
-        webhook_path = "/" + BOT_TOKEN.split(":")[1] + "/"
-        webhook_url = "https://contact-bot-hzjf.onrender.com" + webhook_path
-        await bot.set_webhook(webhook_url)
-        print("Webhook set: " + webhook_url)
-        db_initialized = True
-
-def application(environ, start_response):
-    if environ["REQUEST_METHOD"] == "POST":
-        try:
-            content_length = int(environ.get("CONTENT_LENGTH", 0))
-            body = environ["wsgi.input"].read(content_length)
-            data = json.loads(body)
-            update = bot_module.Update(**data)
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(ensure_db())
-            loop.run_until_complete(dp.feed_update(bot, update))
-            loop.close()
-            start_response("200 OK", [("Content-Type", "text/plain")])
-            return [b"OK"]
-        except Exception as e:
-            start_response("500 Error", [("Content-Type", "text/plain")])
-            return [str(e).encode()]
-    else:
-        start_response("200 OK", [("Content-Type", "text/plain")])
-        return [b"Bot is running"]
+application = create_web_app()

@@ -20,7 +20,7 @@ async def webhook_handler(request):
     await request.app['dp'].feed_update(request.app['bot'], update)
     return web.Response()
 
-def create_web_app():
+def application():
     app = web.Application()
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher(storage=MemoryStorage())
@@ -37,5 +37,3 @@ def create_web_app():
     app.on_shutdown.append(on_shutdown)
     
     return app
-
-application = create_web_app()
